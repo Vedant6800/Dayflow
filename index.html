@@ -60,58 +60,30 @@
 
   <footer class="home-footer">
     <p>Dayflow &mdash; <span id="footer-date"></span></p>
+    <p style="margin-top: 0.5rem;"><button id="reset-config" class="btn-ghost" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">Reset GitHub Config</button></p>
   </footer>
 
-  <!-- Config Modal -->
-  <div id="config-modal" class="modal-overlay hidden">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title">Connect to GitHub</h2>
-        <p class="modal-subtitle">Your data is stored privately in your own GitHub repository.</p>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label" for="cfg-token">Personal Access Token</label>
-          <input type="password" id="cfg-token" class="form-input" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" />
-          <span class="form-hint">Requires <code>repo</code> scope. <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener">Create one here ↗</a></span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="cfg-owner">GitHub Username</label>
-          <input type="text" id="cfg-owner" class="form-input" placeholder="your-username" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="cfg-repo">Repository Name</label>
-          <input type="text" id="cfg-repo" class="form-input" placeholder="dayflow-data" />
-        </div>
-        <p class="form-note">💡 Create a new private repository on GitHub first, then enter its name here.</p>
-      </div>
-      <div class="modal-footer">
-        <button id="cfg-save" class="btn btn-primary">Save & Connect</button>
-      </div>
-    </div>
-  </div>
 
-  <script src="js/config.js"></script>
+
   <script src="js/theme.js"></script>
+  <script src="js/github.js"></script>
   <script>
     // Footer date
     document.getElementById('footer-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Show config modal if not configured
-    if (!Config.isConfigured()) {
-      document.getElementById('config-modal').classList.remove('hidden');
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            await GitHub.initializeToken();
+        } catch(e) {
+            console.error(e.message);
+        }
+    });
 
-    document.getElementById('cfg-save').addEventListener('click', () => {
-      const token = document.getElementById('cfg-token').value.trim();
-      const owner = document.getElementById('cfg-owner').value.trim();
-      const repo  = document.getElementById('cfg-repo').value.trim();
-      if (!token || !owner || !repo) {
-        alert('Please fill in all fields.');
-        return;
+    document.getElementById('reset-config').addEventListener('click', () => {
+      if (confirm('Are you sure you want to disconnect? You will need to re-enter your GitHub details.')) {
+        GitHub.TokenManager.clearToken();
+        location.reload();
       }
-      Config.save({ token, owner, repo });
-      document.getElementById('config-modal').classList.add('hidden');
     });
   </script>
 </body>

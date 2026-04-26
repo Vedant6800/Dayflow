@@ -2,8 +2,14 @@
  * habits.js — Habits Module Logic
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!Config.isConfigured()) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await GitHub.initializeToken();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('habits-loading').innerHTML = `<p class="loading-text">${e.message}</p>`;
+    return;
+  }
 
   const CONFIG_PATH = 'data/habits/config.json';
   

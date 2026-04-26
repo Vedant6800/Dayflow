@@ -2,8 +2,14 @@
  * journal.js — Daily Journal Module Logic
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!Config.isConfigured()) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await GitHub.initializeToken();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('journal-loading').innerHTML = `<p class="loading-text">${e.message}</p>`;
+    return;
+  }
 
   // State
   const now = new Date();

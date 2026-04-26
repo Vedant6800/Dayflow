@@ -2,8 +2,14 @@
  * ideas.js — Ideas & Projects Module Logic
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!Config.isConfigured()) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await GitHub.initializeToken();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('ideas-loading').innerHTML = `<p class="loading-text">${e.message}</p>`;
+    return;
+  }
 
   const DATA_PATH = 'data/ideas.json';
   
