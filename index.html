@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dayflow — Your Daily Companion</title>
+  <meta name="description" content="Dayflow is a calm, distraction-free personal life tracker combining habit tracking, idea logging, and daily journaling in one quiet space." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body class="home-page">
+
+  <header class="home-header">
+    <div class="home-brand">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-name">Dayflow</span>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+      <span class="theme-icon">☀️</span>
+    </button>
+  </header>
+
+  <main class="home-main">
+    <div class="home-hero">
+      <h1 class="home-title">Your quiet daily space</h1>
+      <p class="home-subtitle">Track habits, capture ideas, and write freely — all in one calm place.</p>
+    </div>
+
+    <div class="module-grid">
+      <a href="habits.html" class="module-card" id="card-habits">
+        <div class="card-icon">📅</div>
+        <div class="card-body">
+          <h2 class="card-title">Habits</h2>
+          <p class="card-desc">Check off your daily rituals and build consistent streaks.</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <a href="ideas.html" class="module-card" id="card-ideas">
+        <div class="card-icon">💡</div>
+        <div class="card-body">
+          <h2 class="card-title">Ideas</h2>
+          <p class="card-desc">Capture sparks of inspiration and track your projects.</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <a href="journal.html" class="module-card" id="card-journal">
+        <div class="card-icon">🧾</div>
+        <div class="card-body">
+          <h2 class="card-title">Journal</h2>
+          <p class="card-desc">Write freely about your day in a calm, open space.</p>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+    </div>
+  </main>
+
+  <footer class="home-footer">
+    <p>Dayflow &mdash; <span id="footer-date"></span></p>
+  </footer>
+
+  <!-- Config Modal -->
+  <div id="config-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Connect to GitHub</h2>
+        <p class="modal-subtitle">Your data is stored privately in your own GitHub repository.</p>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="cfg-token">Personal Access Token</label>
+          <input type="password" id="cfg-token" class="form-input" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" />
+          <span class="form-hint">Requires <code>repo</code> scope. <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener">Create one here ↗</a></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cfg-owner">GitHub Username</label>
+          <input type="text" id="cfg-owner" class="form-input" placeholder="your-username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cfg-repo">Repository Name</label>
+          <input type="text" id="cfg-repo" class="form-input" placeholder="dayflow-data" />
+        </div>
+        <p class="form-note">💡 Create a new private repository on GitHub first, then enter its name here.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="cfg-save" class="btn btn-primary">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script>
+    // Footer date
+    document.getElementById('footer-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Show config modal if not configured
+    if (!Config.isConfigured()) {
+      document.getElementById('config-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('cfg-save').addEventListener('click', () => {
+      const token = document.getElementById('cfg-token').value.trim();
+      const owner = document.getElementById('cfg-owner').value.trim();
+      const repo  = document.getElementById('cfg-repo').value.trim();
+      if (!token || !owner || !repo) {
+        alert('Please fill in all fields.');
+        return;
+      }
+      Config.save({ token, owner, repo });
+      document.getElementById('config-modal').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habits — Dayflow</title>
+  <meta name="description" content="Track your daily habits and build consistent streaks with Dayflow." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body class="module-page">
+
+  <div class="module-layout">
+    <!-- Sidebar -->
+    <aside class="module-sidebar">
+      <a href="index.html" class="back-link">
+        <span class="back-arrow">←</span>
+        <span>Home</span>
+      </a>
+      <div class="sidebar-brand">
+        <span class="sidebar-icon">📅</span>
+        <span class="sidebar-title">Habits</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-view="today" id="nav-today">Today</button>
+        <button class="sidebar-nav-item" data-view="manage" id="nav-manage">Manage</button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button id="theme-toggle" class="theme-toggle sidebar-theme-btn" aria-label="Toggle theme">
+        <span class="theme-icon">☀️</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="module-content" id="habits-content">
+
+      <!-- Loading State -->
+      <div id="habits-loading" class="loading-screen">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading your habits…</p>
+      </div>
+
+      <!-- Today View -->
+      <div id="view-today" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow" id="habits-date-label"></p>
+            <h1 class="content-title">Today's Habits</h1>
+          </div>
+          <div class="header-meta" id="habits-progress-ring"></div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="habit-progress-bar"></div>
+          </div>
+          <span class="progress-label" id="habit-progress-label">0 / 0</span>
+        </div>
+
+        <div class="habit-list" id="habit-list">
+          <!-- Habits rendered here -->
+        </div>
+
+        <div class="empty-state hidden" id="habits-empty">
+          <p class="empty-icon">📋</p>
+          <p class="empty-text">No habits yet. Add some in the <strong>Manage</strong> tab.</p>
+        </div>
+      </div>
+
+      <!-- Manage View -->
+      <div id="view-manage" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow">Configuration</p>
+            <h1 class="content-title">Manage Habits</h1>
+          </div>
+        </div>
+
+        <div class="add-habit-form card">
+          <input type="text" id="new-habit-input" class="form-input" placeholder="Habit name (e.g. Gym, Reading…)" maxlength="60" />
+          <button id="add-habit-btn" class="btn btn-primary" id="add-habit-btn">+ Add Habit</button>
+        </div>
+
+        <div class="habit-manage-list" id="habit-manage-list"></div>
+
+        <div class="empty-state hidden" id="manage-empty">
+          <p class="empty-icon">✏️</p>
+          <p class="empty-text">Start by adding your first habit above.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Save indicator -->
+  <div id="save-toast" class="save-toast hidden">
+    <span class="toast-dot"></span>
+    <span class="toast-text">Saving…</span>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/habits.js"></script>
+</body>
+</html>

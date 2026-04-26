@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal — Dayflow</title>
+  <meta name="description" content="Write your daily journal entries freely in a calm, distraction-free space." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body class="module-page">
+
+  <div class="module-layout">
+    <!-- Sidebar -->
+    <aside class="module-sidebar">
+      <a href="index.html" class="back-link">
+        <span class="back-arrow">←</span>
+        <span>Home</span>
+      </a>
+      <div class="sidebar-brand">
+        <span class="sidebar-icon">🧾</span>
+        <span class="sidebar-title">Journal</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-view="write" id="nav-write">Today</button>
+        <button class="sidebar-nav-item" data-view="past" id="nav-past">Past Entries</button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button id="theme-toggle" class="theme-toggle sidebar-theme-btn" aria-label="Toggle theme">
+        <span class="theme-icon">☀️</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="module-content" id="journal-content">
+
+      <!-- Loading -->
+      <div id="journal-loading" class="loading-screen">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading your journal…</p>
+      </div>
+
+      <!-- Write View -->
+      <div id="view-write" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow" id="journal-date-label"></p>
+            <h1 class="content-title">Today's Entry</h1>
+          </div>
+          <button class="btn btn-primary" id="journal-save-btn">Save Entry</button>
+        </div>
+
+        <div class="journal-editor card">
+          <textarea id="journal-textarea" class="journal-textarea" placeholder="Write about your day… What happened? How did it feel? What are you grateful for?"></textarea>
+        </div>
+
+        <p class="journal-hint">Your entry is saved privately to your GitHub repository.</p>
+      </div>
+
+      <!-- Past Entries View -->
+      <div id="view-past" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow">Archive</p>
+            <h1 class="content-title">Past Entries</h1>
+          </div>
+          <div class="month-nav" id="month-nav">
+            <button class="month-btn" id="prev-month">‹</button>
+            <span class="month-label" id="month-label"></span>
+            <button class="month-btn" id="next-month">›</button>
+          </div>
+        </div>
+
+        <div id="past-entries-list" class="past-entries-list"></div>
+
+        <div class="empty-state hidden" id="past-empty">
+          <p class="empty-icon">📖</p>
+          <p class="empty-text">No entries for this month.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Save indicator -->
+  <div id="save-toast" class="save-toast hidden">
+    <span class="toast-dot"></span>
+    <span class="toast-text">Saving…</span>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/journal.js"></script>
+</body>
+</html>

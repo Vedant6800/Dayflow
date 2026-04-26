@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideas — Dayflow</title>
+  <meta name="description" content="Capture and manage your ideas and projects with Dayflow." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body class="module-page">
+
+  <div class="module-layout">
+    <!-- Sidebar -->
+    <aside class="module-sidebar">
+      <a href="index.html" class="back-link">
+        <span class="back-arrow">←</span>
+        <span>Home</span>
+      </a>
+      <div class="sidebar-brand">
+        <span class="sidebar-icon">💡</span>
+        <span class="sidebar-title">Ideas</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-filter="all" id="filter-all">All</button>
+        <button class="sidebar-nav-item" data-filter="idea" id="filter-idea">Idea</button>
+        <button class="sidebar-nav-item" data-filter="in-progress" id="filter-inprogress">In Progress</button>
+        <button class="sidebar-nav-item" data-filter="completed" id="filter-completed">Completed</button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button id="theme-toggle" class="theme-toggle sidebar-theme-btn" aria-label="Toggle theme">
+        <span class="theme-icon">☀️</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="module-content" id="ideas-content">
+
+      <!-- Loading -->
+      <div id="ideas-loading" class="loading-screen">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading your ideas…</p>
+      </div>
+
+      <!-- Ideas View -->
+      <div id="view-ideas" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow">Quick Capture</p>
+            <h1 class="content-title">Your Ideas</h1>
+          </div>
+          <button class="btn btn-primary" id="open-add-idea">+ New Idea</button>
+        </div>
+
+        <div id="idea-list" class="idea-list"></div>
+
+        <div class="empty-state hidden" id="ideas-empty">
+          <p class="empty-icon">💭</p>
+          <p class="empty-text">No ideas yet. Hit <strong>+ New Idea</strong> to capture one.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Add/Edit Idea Modal -->
+  <div id="idea-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="idea-modal-title">New Idea</h2>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="idea-edit-id" />
+        <div class="form-group">
+          <label class="form-label" for="idea-title-input">Title</label>
+          <input type="text" id="idea-title-input" class="form-input" placeholder="What's the idea?" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="idea-desc-input">Description</label>
+          <textarea id="idea-desc-input" class="form-textarea" placeholder="A short description…" rows="3" maxlength="500"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="idea-status-input">Status</label>
+          <select id="idea-status-input" class="form-select">
+            <option value="idea">💭 Idea</option>
+            <option value="in-progress">🔄 In Progress</option>
+            <option value="completed">✅ Completed</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="idea-cancel-btn" class="btn btn-ghost">Cancel</button>
+        <button id="idea-save-btn" class="btn btn-primary">Save Idea</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirm -->
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete this idea?</h2>
+        <p class="modal-subtitle">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="delete-cancel-btn" class="btn btn-ghost">Cancel</button>
+        <button id="delete-confirm-btn" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save indicator -->
+  <div id="save-toast" class="save-toast hidden">
+    <span class="toast-dot"></span>
+    <span class="toast-text">Saving…</span>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/ideas.js"></script>
+</body>
+</html>
