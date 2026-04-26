@@ -109,12 +109,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     habits.push(newHabit);
     addInput.value = '';
     renderManage();
-    GitHub.saveFile(CONFIG_PATH, habits);
   });
 
   addInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addBtn.click();
   });
+
+  const saveManageBtn = document.getElementById('save-manage-btn');
+  if (saveManageBtn) {
+    saveManageBtn.addEventListener('click', () => {
+      GitHub.saveFile(CONFIG_PATH, habits);
+    });
+  }
 
   function renderManage() {
     manageList.innerHTML = '';
@@ -140,7 +146,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (confirm(`Remove habit "${h.name}"? Historical data will be preserved but it won't show in your active list.`)) {
           habits = habits.filter(x => x.id !== h.id);
           renderManage();
-          GitHub.saveFile(CONFIG_PATH, habits);
         }
       };
 
@@ -218,7 +223,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     updateProgress(completions[todayStr].length, habits.length);
-    GitHub.saveFile(getMonthPath(currentDate), completions);
+  }
+
+  const saveTodayBtn = document.getElementById('save-today-btn');
+  if (saveTodayBtn) {
+    saveTodayBtn.addEventListener('click', () => {
+      GitHub.saveFile(getMonthPath(currentDate), completions);
+    });
   }
 
   function updateProgress(done, total) {

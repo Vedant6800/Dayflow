@@ -36,7 +36,7 @@ A quick-capture inbox for tasks and sparks of inspiration.
 ### 🧾 Daily Journal
 A quiet, completely unstructured textarea purely dedicated to daily thoughts.
 - Zero forced constraints. Just sit and type.
-- Debounced auto-saving ensures you never lose a word.
+- Explicit save button ensures your entries are written to GitHub exactly when you are ready.
 - Navigate a calm, chronological archive of previous days and months.
 
 ---

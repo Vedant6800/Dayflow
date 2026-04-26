@@ -119,15 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   saveBtn.addEventListener('click', saveEntry);
 
-  // Auto-save logic (debounced)
-  textarea.addEventListener('input', () => {
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-      saveEntry();
-    }, 2000); // Auto save after 2 seconds of typing
-  });
-
-
   // --- Archive Logic ---
   function formatMonthLabel(dateObj) {
     return dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
