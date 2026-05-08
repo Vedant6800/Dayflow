@@ -12,6 +12,7 @@ const Theme = (() => {
     document.querySelectorAll('.theme-icon').forEach(el => {
       el.textContent = theme === 'dark' ? '🌙' : '☀️';
     });
+    
     localStorage.setItem(KEY, theme);
   }
 

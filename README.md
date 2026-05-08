@@ -1,94 +1,113 @@
 <div align="center">
-  <h1>🌿 Dayflow</h1>
-  <p><b>Your quiet daily space.</b></p>
-  <p><i>Track habits, capture ideas, and write freely — all securely stored in your own GitHub repository.</i></p>
-
-  <p>
+  <img alt="Dayflow Logo" src="logos/logo2-removebg-preview.png" width="120" height="120">
+  <h1 align="center">Dayflow</h1>
+  <p align="center">
+    <strong>A calm, minimalist life tracker completely powered by the GitHub REST API.</strong>
+  </p>
+  <p align="center">
     <img alt="Vanilla JS" src="https://img.shields.io/badge/Vanilla%20JS-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
-    <img alt="CSS" src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" />
-    <img alt="Serverless" src="https://img.shields.io/badge/Serverless-GitHub_API-black?style=for-the-badge&logo=github&logoColor=white" />
+    <img alt="CSS3" src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" />
+    <img alt="GitHub API Backend" src="https://img.shields.io/badge/GitHub_API-Backend-181717?style=for-the-badge&logo=github&logoColor=white" />
+    <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" />
   </p>
 </div>
 
 <br />
 
-> **Dayflow** is a minimalist, personal life tracker that gives you a distraction-free environment to record your daily rituals, log your ideas, and maintain a private journal. It is intentionally simple, free of analytics bloat, and requires zero servers.
+## 📖 Overview
 
-Instead of storing your personal data in a black-box cloud, Dayflow bridges directly to GitHub via its REST API, acting as a beautiful frontend while keeping your data **100% privately owned and accessible**.
+**Dayflow** is an intention-driven, lightweight personal tracking application designed for focus. Most life trackers are plagued by feature bloat, heavy analytics, and gamification, locking your private data into proprietary clouds. 
 
----
-
-## ✨ Features
-
-Dayflow is split into three core modules, each designed with extreme simplicity and modern aesthetics in mind.
-
-### 📅 Habits Tracker
-A lightning-fast checklist designed for your daily rituals. 
-- Mark habits as complete with satisfying visual feedback.
-- Tracks daily completion logs and lightweight streak continuity.
-- Add or modify rituals on the fly.
-
-### 💡 Ideas Logger
-A quick-capture inbox for tasks and sparks of inspiration. 
-- Organizes entries instantly into **Idea**, **In Progress**, or **Completed** statuses.
-- Clean card-based layout so you'll never lose track of a project again.
-
-### 🧾 Daily Journal
-A quiet, completely unstructured textarea purely dedicated to daily thoughts.
-- Zero forced constraints. Just sit and type.
-- Explicit save button ensures your entries are written to GitHub exactly when you are ready.
-- Navigate a calm, chronological archive of previous days and months.
+Dayflow flips the paradigm. It acts as a beautiful, strictly client-side frontend that bridges directly to your private GitHub repository via securely authenticated REST API calls. Your data is stored elegantly as JSON, ensuring **100% data ownership**, infinite history retention, and complete privacy.
 
 ---
 
-## 🚀 Getting Started
+## ✨ Core Modules
 
-Since Dayflow connects securely to your private GitHub to function as your database, getting started requires setting up an access token. 
+Dayflow is intentionally constrained to three highly-curated modules to foster mindfulness and organization.
 
-### 1. Ensure You Have the Data Repository
-You must have a **private** repository specifically named `Dayflow` explicitly created on your GitHub account (`Vedant6800`). This completely isolated space is where all tracking JSON files will be cleanly managed.
+### 📅 Habits Tracker: The Dashboard
+A lightning-fast checklist natively tracking daily rituals through an advanced configuration engine. 
+- **Smart Completion**: Mark habits complete with rewarding visual feedback spanning dynamically built monthly histories.
+- **Layered Dashboard**: Access a lightweight overview of your overall completion rates and current daily streaks, elegantly structured alongside an interactive "Habit Explorer".
+- **Detailed Analytics**: Use the Explorer to natively pull up an all-time consistency percentage and full chronological archive of individual `✔` or `✖` days for any habit (active or deleted).
+- **True Archiving (Soft Deletion)**: Removing a habit organically sweeps it off the active UI while preserving its exact historical logs indefinitely across old months.
+- **Time-Aware Behavior**: Newly added rituals behave intelligently—meaning they'll rarely populate as failures in history prior to their creation date.
 
-### 2. Generate an Access Token
-Go to [GitHub Developer Settings](https://github.com/settings/tokens/new) and generate a new Personal Access Token (PAT).
-* **If Classic Token:** Check the `repo` scope.
-* **If Fine-Grained Token:** Explicitly select access for the `Dayflow` repository, and grant **Read and write** permissions under the **Contents** dropdown. 
+### 💡 Ideas Logger: The Inbox
+A clean, card-based Kanban-lite capture system for sparks of inspiration. 
+- **Frictionless Capture**: Add ideas as fast as you can type them.
+- **State Organization**: Organizes entries instantly into **Idea**, **In Progress**, or **Completed** statuses without convoluted column drag-and-drops. 
+- **Sleek Interface**: Utilizes robust CSS-grid structures so you never lose track of a fleeting thought.
 
-### 3. Open Dayflow
-Serve the target folder via any generic local HTTP server (such as VSCode's *Live Server* or Python's HTTP module). Navigate to `index.html`.
-
-### 4. Connect
-A native browser prompt will automatically greet you requesting your Personal Access Token. Paste it in. Dayflow validates the token securely against the GitHub API and automatically retains it locally in your browser's trusted storage!
+### 🧾 Daily Journal: The Unstructured Canvas
+A quiet, distraction-free environment purely dedicated to daily brain dumps.
+- **Zero Constraints**: Just sit, select your date, and type. No complex rich-text editors.
+- **Explicit Saving**: Deliberate, manual action ensures your private entries are committed to GitHub exactly when you finalize your thoughts.
+- **Monthly Navigation**: Navigate through a calm, chronological archive of previous days and months seamlessly mapped to GitHub.
 
 ---
 
-## 📂 Directory Structure
+## 🛠️ System Architecture & Data Schema
 
-Under the hood, all actions are pushed into your remote repository via Base64 JSON payloads, following incredibly organized patterns:
+Dayflow inherently requires zero custom servers. The architectural philosophy relies on reading, caching, and writing directly to `fetch` endpoints wrapped within an in-memory execution queue to avoid remote race conditions.
+
+<details>
+<summary><b>Click to expand the precise Repository File Structure</b></summary>
 
 ```text
-├── data/
-│   ├── ideas.json                   # List of your ideas and ongoing projects
-│   ├── habits/
-│   │   ├── config.json              # Schema logic holding active habits
-│   │   ├── 2026/                    # Year mapping
-│   │   │   └── 04.json              # Monthly tracking (dates mapped to completed habits) 
-│   ├── journal/
-│   │   ├── 2026/                    # Year mapping
-│   │   │   └── 04.json              # Unstructured daily text entries mapped to dates
+📁 /dayflow-repository
+ ├── 📁 data          
+ │    ├── 📄 ideas.json               # Aggregated array of idea models
+ │    │
+ │    ├── 📁 habits      
+ │    │    ├── 📄 config.json         # Array of { id, name, createdAt, isActive, deletedAt }
+ │    │    └── 📁 YYYY     
+ │    │         └── 📄 MM.json        # Maps exact YYYY-MM-DD -> Array of Completed Habit ID strings
+ │    │
+ │    └── 📁 journal   
+ │         └── 📁 YYYY    
+ │              └── 📄 MM.json        # Maps exact YYYY-MM-DD -> Array of freeform Journal strings
 ```
+
+</details>
 
 ---
 
-## 🛠️ Tech Stack & Philosophy
+## 🚀 Getting Started Guide
 
-Dayflow believes less is more.
+Deploying Dayflow takes roughly 2 minutes and requires zero command-line expertise.
 
-* **Beautiful UI:** Custom CSS utilizing variable logic for fluid, dynamic **Light/Dark themes**, smooth transitions, and a muted, calm typography space.
-* **Fast & Client-Side:** Written in strictly Vanilla ES6+. It operates as a local utility needing no npm install or framework hydration processes.
-* **Smart Concurrency:** All network logic uses `Promise` queues to guarantee fast multi-action clicks never overwrite files accidentally.
+### 1. Initialize Your Data Repository
+You must have a **private** repository specifically named `Dayflow` explicitly created on your GitHub account (`Vedant6800`). This isolated environment is where all structured JSON payloads will be securely pushed.
+
+### 2. Configure Authentication Token
+You must instruct Dayflow how to securely authenticate with GitHub API as you. 
+1. Go to [GitHub Developer Settings](https://github.com/settings/tokens/new)
+2. Generate a Personal Access Token (PAT).
+    * **Standard Choice (Classic Token)**: Tick the `repo` scope. 
+    * **Secure Choice (Fine-Grained)**: Explicitly target the `Dayflow` repository and assign **Read and write** permissions uniquely to **Contents**.
+
+### 3. Serve the Application
+Because Dayflow is pure JavaScript/CSS/HTML, there is no build step! 
+Serve the folder on a local localhost port (`127.0.0.1:5500`) using Live Server in VSCode or `python -m http.server`.
+
+### 4. Direct Connect
+Enter `index.html` in your browser. A browser-native prompt will instantly intercept you. Paste your generated GitHub token here. 
+> *Dayflow will natively test the token with GitHub behind the scenes, and upon returning a verified `200 OK`, securely lock it into the browser's persistent `localStorage` cache.*
+
+---
+
+## 🎨 Design Philosophy
+
+We believe productivity systems fail when they become cluttered task-masters. Dayflow's technical choices echo this philosophy:
+* **Beautiful Vanilla UI**: Advanced CSS utilizing CSS variable tokens directly for fluid **Light/Dark modes**, exact micro-transitions, and calm spacing rules.
+* **Serverless Safety**: Never worry about subscriptions, server outages, or a service shutting down and holding your habits hostage. Your GitHub repository outlives businesses. 
+* **Optimized API Polling**: Multi-month timelines compute asynchronously over cached memory, reducing rate-limiting issues strictly encountered in basic REST projects.
 
 <br />
 
 <div align="center">
-  <i>Enjoy your daily calm.</i>
+  <p><i>Enjoy your quiet, daily space.</i></p>
+  <hr style="width:50%; margin-top:2rem;" />
 </div>
