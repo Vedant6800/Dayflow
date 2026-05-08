@@ -24,7 +24,7 @@ Dayflow flips the paradigm. It acts as a beautiful, strictly client-side fronten
 
 ## ✨ Core Modules
 
-Dayflow is intentionally constrained to three highly-curated modules to foster mindfulness and organization.
+Dayflow is intentionally constrained to four highly-curated modules to foster mindfulness and organization.
 
 ### 📅 Habits Tracker: The Dashboard
 A lightning-fast checklist natively tracking daily rituals through an advanced configuration engine. 
@@ -46,6 +46,14 @@ A quiet, distraction-free environment purely dedicated to daily brain dumps.
 - **Explicit Saving**: Deliberate, manual action ensures your private entries are committed to GitHub exactly when you finalize your thoughts.
 - **Monthly Navigation**: Navigate through a calm, chronological archive of previous days and months seamlessly mapped to GitHub.
 
+### ✅ Tasks: Date-Based Task Management
+A feature-rich, action-oriented space for planning and tracking tasks for any given day.
+- **Date Navigation**: Seamlessly plan for today, past dates, or any future date without restrictions.
+- **Priority Grouping**: Tasks are visually sorted by priority (High, Medium, Low) for quick assessment.
+- **Manual Save Workflow**: Accumulate changes in memory and explicitly save only the affected months to GitHub, preventing accidental overwrites.
+- **Upcoming View**: Scan the next 30 days to see all planned tasks grouped elegantly by date.
+- **Inline Editing & Moving**: Quickly edit task text, adjust priority, or shift a task to an entirely different date.
+
 ---
 
 ## 🛠️ System Architecture & Data Schema
@@ -65,9 +73,13 @@ Dayflow inherently requires zero custom servers. The architectural philosophy re
  │    │    └── 📁 YYYY     
  │    │         └── 📄 MM.json        # Maps exact YYYY-MM-DD -> Array of Completed Habit ID strings
  │    │
- │    └── 📁 journal   
+ │    ├── 📁 journal   
  │         └── 📁 YYYY    
  │              └── 📄 MM.json        # Maps exact YYYY-MM-DD -> Array of freeform Journal strings
+ │
+ │    └── 📁 todos
+ │         └── 📁 YYYY
+ │              └── 📄 MM.json        # Maps exact YYYY-MM-DD -> Array of Task objects
 ```
 
 </details>

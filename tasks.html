@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks — Dayflow</title>
+  <meta name="description" content="Plan and manage tasks for any date. A focused, date-based task management space in Dayflow." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+
+<body class="module-page">
+
+  <div class="module-layout">
+    <!-- Sidebar -->
+    <aside class="module-sidebar">
+      <a href="index.html" class="back-link" id="back-home-link">
+        <span class="back-arrow">←</span>
+        <span>Home</span>
+      </a>
+      <div class="sidebar-brand">
+        <span class="sidebar-icon">✅</span>
+        <span class="sidebar-title">Tasks</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-view="tasks" id="nav-tasks">Tasks</button>
+        <button class="sidebar-nav-item" data-view="upcoming" id="nav-upcoming">Upcoming</button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button id="theme-toggle" class="theme-toggle sidebar-theme-btn" aria-label="Toggle theme">
+        <span class="theme-icon">☀️</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="module-content" id="tasks-content">
+
+      <!-- Loading State -->
+      <div id="tasks-loading" class="loading-screen">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading tasks…</p>
+      </div>
+
+      <!-- Tasks View -->
+      <div id="view-tasks" class="view hidden">
+
+        <!-- Header row -->
+        <div class="tasks-header">
+          <div class="tasks-header-left">
+            <p class="content-eyebrow" id="tasks-eyebrow">Tasks</p>
+            <h1 class="content-title tasks-page-title">
+              <span id="tasks-date-display"></span>
+            </h1>
+          </div>
+          <div class="tasks-header-actions">
+            <span class="unsaved-indicator hidden" id="unsaved-indicator">Unsaved changes •</span>
+            <button class="btn btn-primary" id="save-tasks-btn">Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Date Navigator -->
+        <div class="date-navigator tasks-date-nav">
+          <button class="date-nav-btn" id="tasks-date-prev" title="Previous day">&#8592;</button>
+          <div class="date-nav-center">
+            <input type="date" id="tasks-date-picker" class="date-picker-input" />
+            <span class="date-nav-label" id="tasks-date-label"></span>
+          </div>
+          <button class="date-nav-btn" id="tasks-date-next" title="Next day">&#8594;</button>
+          <button class="btn btn-ghost tasks-today-btn" id="tasks-goto-today">Today</button>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="tasks-stats-bar" id="tasks-stats-bar">
+          <div class="tasks-stat">
+            <span class="tasks-stat-val" id="stat-total">0</span>
+            <span class="tasks-stat-label">Total</span>
+          </div>
+          <div class="tasks-stat">
+            <span class="tasks-stat-val tasks-stat-done" id="stat-done">0</span>
+            <span class="tasks-stat-label">Done</span>
+          </div>
+          <div class="tasks-stat">
+            <span class="tasks-stat-val tasks-stat-pending" id="stat-pending">0</span>
+            <span class="tasks-stat-label">Pending</span>
+          </div>
+          <div class="tasks-progress-wrap">
+            <div class="tasks-progress-track">
+              <div class="tasks-progress-fill" id="tasks-progress-fill"></div>
+            </div>
+            <span class="tasks-progress-pct" id="tasks-progress-pct">0%</span>
+          </div>
+        </div>
+
+        <!-- Quick-add input -->
+        <div class="tasks-add-bar card" id="tasks-add-bar">
+          <div class="tasks-add-row">
+            <input
+              type="text"
+              id="task-new-input"
+              class="form-input tasks-add-input"
+              placeholder="Add a task… press Enter to add"
+              maxlength="200"
+              autocomplete="off"
+            />
+            <select id="task-new-priority" class="form-select tasks-priority-select" aria-label="Priority">
+              <option value="none">— Priority</option>
+              <option value="high">🔴 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button class="btn btn-primary" id="task-add-btn">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Task list (pending grouped by priority) -->
+        <div id="tasks-pending-section">
+          <div class="tasks-group-list" id="tasks-pending-list"></div>
+          <div class="empty-state hidden" id="tasks-empty">
+            <p class="empty-icon">✅</p>
+            <p class="empty-text">No tasks for this day.<br>Add one above to get started.</p>
+          </div>
+        </div>
+
+        <!-- Completed section (collapsible) -->
+        <div class="tasks-completed-section hidden" id="tasks-completed-section">
+          <button class="tasks-section-toggle" id="tasks-completed-toggle">
+            <span class="tasks-section-toggle-icon" id="tasks-completed-chevron">▶</span>
+            <span>Completed</span>
+            <span class="tasks-completed-count" id="tasks-completed-count">0</span>
+          </button>
+          <div class="tasks-group-list" id="tasks-completed-list"></div>
+        </div>
+
+      </div>
+
+      <!-- Upcoming View -->
+      <div id="view-upcoming" class="view hidden">
+        <div class="content-header">
+          <div>
+            <p class="content-eyebrow">Planning</p>
+            <h1 class="content-title">Upcoming Tasks</h1>
+          </div>
+        </div>
+        <div id="upcoming-list" class="upcoming-list"></div>
+        <div class="empty-state hidden" id="upcoming-empty">
+          <p class="empty-icon">🗓️</p>
+          <p class="empty-text">No upcoming tasks found in the next 30 days.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Inline-edit modal -->
+  <div id="task-edit-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Task</h2>
+        <p class="modal-subtitle">Update the task details below.</p>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="edit-task-text">Task</label>
+          <input type="text" id="edit-task-text" class="form-input" maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-task-priority">Priority</label>
+          <select id="edit-task-priority" class="form-select">
+            <option value="none">None</option>
+            <option value="high">🔴 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-task-date">Date</label>
+          <input type="date" id="edit-task-date" class="form-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="edit-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="edit-save-btn">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save indicator toast -->
+  <div id="save-toast" class="save-toast hidden">
+    <span class="toast-dot"></span>
+    <span class="toast-text">Saving…</span>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/tasks.js"></script>
+</body>
+
+</html>
