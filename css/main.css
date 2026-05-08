@@ -846,6 +846,101 @@ select {
    HABITS MODULE
    ============================================================ */
 
+/* ── Date Navigator ─────────────────────────────────────────── */
+.date-navigator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.date-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+
+.date-nav-btn:hover:not(:disabled) {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.date-nav-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.date-picker-input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition-slow);
+  /* Hide the native calendar icon on webkit; keep functional */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.date-picker-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.date-nav-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ── Context bar ────────────────────────────────────────────── */
+.date-context-bar {
+  min-height: 1.4rem; /* reserve space so layout doesn't jump */
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  transition: color var(--transition);
+}
+
+.date-context-bar.past {
+  color: var(--warning);
+}
+
+/* ── Disabled habit (future dates, should not normally appear) */
+.habit-item.habit-disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.habit-item.habit-disabled .habit-checkbox {
+  cursor: default;
+}
+
+/* habits-progress-ring inline next to progress label */
+.habits-progress-ring {
+  font-size: 0.82rem;
+  color: var(--success);
+  white-space: nowrap;
+}
+
 /* Progress Bar */
 .progress-bar-wrap {
   display: flex;

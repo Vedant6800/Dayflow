@@ -50,16 +50,30 @@
         <div class="content-header">
           <div>
             <p class="content-eyebrow" id="habits-date-label"></p>
-            <h1 class="content-title">Today's Habits</h1>
+            <h1 class="content-title">Habits</h1>
           </div>
           <button class="btn btn-primary" id="save-today-btn">Save Habits</button>
         </div>
+
+        <!-- Date Navigator -->
+        <div class="date-navigator">
+          <button class="date-nav-btn" id="date-prev-btn" title="Previous day">&#8592;</button>
+          <div class="date-nav-center">
+            <input type="date" id="date-picker" class="date-picker-input" />
+            <span class="date-nav-label" id="date-nav-label"></span>
+          </div>
+          <button class="date-nav-btn" id="date-next-btn" title="Next day">&#8594;</button>
+        </div>
+
+        <!-- Viewing context indicator -->
+        <div class="date-context-bar" id="date-context-bar"></div>
 
         <div class="progress-bar-wrap">
           <div class="progress-bar-track">
             <div class="progress-bar-fill" id="habit-progress-bar"></div>
           </div>
           <span class="progress-label" id="habit-progress-label">0 / 0</span>
+          <span class="habits-progress-ring" id="habits-progress-ring"></span>
         </div>
 
         <div class="habit-list" id="habit-list">

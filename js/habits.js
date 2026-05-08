@@ -1,5 +1,6 @@
 /**
  * habits.js — Habits Module Logic
+ * Supports marking habits for any past (or current) date via selectedDate state.
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,42 +14,138 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const CONFIG_PATH = 'data/habits/config.json';
 
-  // State
-  let habits = []; // Array of { id, name, created }
-  let completions = {}; // { "YYYY-MM-DD": ["habit-id", ...] }
+  // ── State ────────────────────────────────────────────────────────────────
+  let habits = [];       // Array of { id, name, createdAt, isActive, deletedAt }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  let currentDate = new Date(); // For tracking which month we are viewing
+  /**
+   * monthCache holds one completions object per month path.
+   * Shape: { "data/habits/YYYY/MM.json": { "YYYY-MM-DD": ["h_id", ...], ... } }
+   * This is the single source of truth for all date operations.
+   */
+  const monthCache = {};
 
-  // UI Elements
-  const viewToday = document.getElementById('view-today');
+  // Use local date parts — never toISOString() — to avoid UTC offset drift.
+  function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // Shift a YYYY-MM-DD string by `delta` days (positive = forward, negative = back).
+  // Operates entirely in local time — no UTC conversion.
+  function shiftDate(dateStr, delta) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return localDateStr(new Date(y, m - 1, d + delta));
+  }
+
+  const todayStr = localDateStr(new Date());
+
+  // selectedDate drives everything in the Today view.
+  let selectedDateStr = todayStr;
+
+  // ── UI Elements ───────────────────────────────────────────────────────────
+  const viewToday     = document.getElementById('view-today');
   const viewDashboard = document.getElementById('view-dashboard');
-  const viewManage = document.getElementById('view-manage');
-  const navToday = document.getElementById('nav-today');
-  const navDashboard = document.getElementById('nav-dashboard');
-  const navManage = document.getElementById('nav-manage');
-  const loading = document.getElementById('habits-loading');
-  const content = document.getElementById('habits-content');
+  const viewManage    = document.getElementById('view-manage');
+  const navToday      = document.getElementById('nav-today');
+  const navDashboard  = document.getElementById('nav-dashboard');
+  const navManage     = document.getElementById('nav-manage');
+  const loading       = document.getElementById('habits-loading');
 
-  const habitList = document.getElementById('habit-list');
-  const manageList = document.getElementById('habit-manage-list');
-  const emptyToday = document.getElementById('habits-empty');
+  const habitList   = document.getElementById('habit-list');
+  const manageList  = document.getElementById('habit-manage-list');
+  const emptyToday  = document.getElementById('habits-empty');
   const emptyManage = document.getElementById('manage-empty');
 
-  const progressBar = document.getElementById('habit-progress-bar');
+  const progressBar   = document.getElementById('habit-progress-bar');
   const progressLabel = document.getElementById('habit-progress-label');
-  const progressRing = document.getElementById('habits-progress-ring'); // optionally an emoji or text
+  const progressRing  = document.getElementById('habits-progress-ring');
 
-  // Set today's date label
+  // Date navigator
+  const datePicker    = document.getElementById('date-picker');
+  const dateNavLabel  = document.getElementById('date-nav-label');
+  const datePrevBtn   = document.getElementById('date-prev-btn');
+  const dateNextBtn   = document.getElementById('date-next-btn');
+  const dateContextBar = document.getElementById('date-context-bar');
+
+  // Set eyebrow to today's human-readable date
   const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
-  document.getElementById('habits-date-label').textContent = new Date().toLocaleDateString('en-US', dateOptions);
+  document.getElementById('habits-date-label').textContent =
+    new Date().toLocaleDateString('en-US', dateOptions);
 
-  function getMonthPath(dateObj) {
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function getMonthPath(dateStr) {
+    const [yyyy, mm] = dateStr.split('-');
     return `data/habits/${yyyy}/${mm}.json`;
   }
 
+  /** Ensure monthCache has the completions for the given dateStr's month. */
+  async function ensureMonthLoaded(dateStr) {
+    const path = getMonthPath(dateStr);
+    if (monthCache[path] !== undefined) return; // already loaded
+    const res = await GitHub.getFile(path);
+    monthCache[path] = res.content || {};
+  }
+
+  /** Get the completions array for a specific date (from cache). */
+  function getCompletionsForDate(dateStr) {
+    const path = getMonthPath(dateStr);
+    const month = monthCache[path] || {};
+    return month[dateStr] || [];
+  }
+
+  /** Format a dateStr as a friendly label, e.g. "Fri, 9 May 2026". */
+  function formatDateLabel(dateStr) {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+    });
+  }
+
+  // ── Date Navigator ────────────────────────────────────────────────────────
+  function updateDateNavigator() {
+    datePicker.value = selectedDateStr;
+    datePicker.max   = todayStr; // no future dates
+
+    dateNavLabel.textContent = formatDateLabel(selectedDateStr);
+
+    // Disable next button when we're already on today
+    dateNextBtn.disabled = (selectedDateStr >= todayStr);
+    dateNextBtn.style.opacity = (selectedDateStr >= todayStr) ? '0.35' : '';
+    dateNextBtn.style.cursor  = (selectedDateStr >= todayStr) ? 'default' : '';
+
+    // Context bar
+    if (selectedDateStr === todayStr) {
+      dateContextBar.textContent = '';
+      dateContextBar.className = 'date-context-bar';
+    } else {
+      dateContextBar.textContent = '✏ Editing past record — ' + formatDateLabel(selectedDateStr);
+      dateContextBar.className = 'date-context-bar past';
+    }
+  }
+
+  datePicker.addEventListener('change', async () => {
+    const val = datePicker.value;
+    if (!val || val > todayStr) return; // block future
+    selectedDateStr = val;
+    updateDateNavigator();
+    await loadAndRenderToday();
+  });
+
+  datePrevBtn.addEventListener('click', async () => {
+    selectedDateStr = shiftDate(selectedDateStr, -1);
+    updateDateNavigator();
+    await loadAndRenderToday();
+  });
+
+  dateNextBtn.addEventListener('click', async () => {
+    if (selectedDateStr >= todayStr) return;
+    selectedDateStr = shiftDate(selectedDateStr, +1);
+    updateDateNavigator();
+    await loadAndRenderToday();
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
   async function init() {
     try {
       const confRes = await GitHub.getFile(CONFIG_PATH);
@@ -61,11 +158,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         deletedAt: h.deletedAt || null
       }));
 
-      // Fetch this month's completions
-      const compRes = await GitHub.getFile(getMonthPath(currentDate));
-      completions = compRes.content || {};
+      // Pre-load today's (= selectedDate's) month
+      await ensureMonthLoaded(selectedDateStr);
 
       loading.classList.add('hidden');
+      updateDateNavigator();
       switchView('today');
       renderManage();
 
@@ -75,6 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // ── View Switching ────────────────────────────────────────────────────────
   function switchView(view) {
     viewToday.classList.add('hidden');
     viewDashboard.classList.add('hidden');
@@ -86,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (view === 'today') {
       viewToday.classList.remove('hidden');
       navToday.classList.add('active');
-      renderToday();
+      loadAndRenderToday();
     } else if (view === 'dashboard') {
       viewDashboard.classList.remove('hidden');
       navDashboard.classList.add('active');
@@ -98,28 +196,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Event Listeners for Nav
-  navToday.addEventListener('click', () => switchView('today'));
+  navToday.addEventListener('click',     () => switchView('today'));
   navDashboard.addEventListener('click', () => switchView('dashboard'));
-  navManage.addEventListener('click', () => switchView('manage'));
+  navManage.addEventListener('click',    () => switchView('manage'));
 
-  // --- Manage Logic ---
-  const addBtn = document.getElementById('add-habit-btn');
+  // ── Manage Logic ──────────────────────────────────────────────────────────
+  const addBtn   = document.getElementById('add-habit-btn');
   const addInput = document.getElementById('new-habit-input');
 
-  addBtn.addEventListener('click', async () => {
+  addBtn.addEventListener('click', () => {
     const val = addInput.value.trim();
     if (!val) return;
-
-    const newHabit = {
+    habits.push({
       id: 'h_' + Date.now().toString(36),
       name: val,
       createdAt: todayStr,
       isActive: true,
       deletedAt: null
-    };
-
-    habits.push(newHabit);
+    });
     addInput.value = '';
     renderManage();
   });
@@ -137,16 +231,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderManage() {
     manageList.innerHTML = '';
-    // Create local array for managing to preserve ordering but keep inactive out
-    const manageActive = habits.filter(h => h.isActive);
-
-    if (manageActive.length === 0) {
+    const active = habits.filter(h => h.isActive);
+    if (active.length === 0) {
       emptyManage.classList.remove('hidden');
       return;
     }
     emptyManage.classList.add('hidden');
 
-    manageActive.forEach(h => {
+    active.forEach(h => {
       const el = document.createElement('div');
       el.className = 'habit-manage-item';
 
@@ -175,40 +267,84 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- Today Logic ---
+  // ── Today Logic ───────────────────────────────────────────────────────────
+
+  /**
+   * Ensure the correct month is loaded, then render the habit list
+   * for selectedDateStr.
+   */
+  async function loadAndRenderToday() {
+    // Show a subtle loading state in the list without hiding the whole view
+    habitList.innerHTML = '<p class="loading-text" style="padding:1rem 0">Loading…</p>';
+    emptyToday.classList.add('hidden');
+
+    try {
+      await ensureMonthLoaded(selectedDateStr);
+    } catch (e) {
+      habitList.innerHTML = '<p class="loading-text" style="padding:1rem 0">Error loading data.</p>';
+      console.error(e);
+      return;
+    }
+
+    renderToday();
+  }
+
   function renderToday() {
     habitList.innerHTML = '';
 
-    // Only show active habits created today or earlier
-    const activeHabits = habits.filter(h => h.isActive && h.createdAt <= todayStr);
+    /**
+     * Visibility rule for a habit on selectedDateStr:
+     *   - must exist at or before selectedDate (createdAt <= selectedDateStr)
+     *   - must not be deleted before selectedDate (deletedAt null OR deletedAt >= selectedDateStr)
+     *   - isActive is for the manage list; for past records we still show if the above match
+     */
+    const visibleHabits = habits.filter(h => {
+      const started = h.createdAt <= selectedDateStr;
+      const notYetDeleted = !h.deletedAt || h.deletedAt >= selectedDateStr;
+      return started && notYetDeleted;
+    });
 
-    if (activeHabits.length === 0) {
+    if (visibleHabits.length === 0) {
       emptyToday.classList.remove('hidden');
       updateProgress(0, 0);
       return;
     }
     emptyToday.classList.add('hidden');
 
-    const todayCompletions = completions[todayStr] || [];
+    const selectedCompletions = getCompletionsForDate(selectedDateStr);
 
-    activeHabits.forEach(h => {
-      const isDone = todayCompletions.includes(h.id);
+    // For streak indicator: check the day before selectedDate
+    const prevDate = new Date(selectedDateStr + 'T00:00:00');
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateStr = prevDate.toISOString().split('T')[0];
+    const prevCompletions = getCompletionsForDate(prevDateStr);
+
+    // Is this a past date? Disable toggling for future (shouldn't reach here) or as needed.
+    const isFuture = selectedDateStr > todayStr;
+
+    visibleHabits.forEach(h => {
+      const isDone = selectedCompletions.includes(h.id);
 
       const el = document.createElement('div');
-      el.className = `habit-item ${isDone ? 'checked' : ''}`;
+      el.className = `habit-item ${isDone ? 'checked' : ''} ${isFuture ? 'habit-disabled' : ''}`;
 
       const checkbox = document.createElement('div');
       checkbox.className = 'habit-checkbox';
       checkbox.textContent = '✓';
-      checkbox.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleHabit(h.id, el);
-      });
+
+      if (!isFuture) {
+        checkbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleHabit(h.id, el);
+        });
+        el.addEventListener('click', () => toggleHabit(h.id, el));
+      }
 
       const name = document.createElement('span');
       name.className = 'habit-name';
-      name.style.cursor = 'pointer';
+      name.style.cursor = isFuture ? 'default' : 'pointer';
       name.textContent = h.name;
+      // Clicking the name opens details (works on any date)
       name.addEventListener('click', (e) => {
         e.stopPropagation();
         openHabitDetails(h);
@@ -217,13 +353,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       el.appendChild(checkbox);
       el.appendChild(name);
 
-      // Lightweight streak visualization
-      // Just check if it was done yesterday
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yStr = yesterday.toISOString().split('T')[0];
-      const yDone = (completions[yStr] || []).includes(h.id);
-      if (yDone) {
+      // Streak fire: show if the previous day was completed
+      const prevDone = prevCompletions.includes(h.id);
+      if (prevDone && selectedDateStr === todayStr) {
+        // Only show streak fire in today view to avoid confusing past views
         const streak = document.createElement('div');
         streak.className = 'habit-streak';
         streak.innerHTML = '<span class="streak-fire">🔥</span>';
@@ -233,30 +366,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       habitList.appendChild(el);
     });
 
-    updateProgress(todayCompletions.length, activeHabits.length);
+    updateProgress(selectedCompletions.filter(id => visibleHabits.some(h => h.id === id)).length, visibleHabits.length);
   }
 
   function toggleHabit(id, el) {
-    if (!completions[todayStr]) {
-      completions[todayStr] = [];
-    }
+    const path = getMonthPath(selectedDateStr);
 
-    const idx = completions[todayStr].indexOf(id);
+    // Ensure the month object exists in cache
+    if (!monthCache[path]) monthCache[path] = {};
+    if (!monthCache[path][selectedDateStr]) monthCache[path][selectedDateStr] = [];
+
+    const arr = monthCache[path][selectedDateStr];
+    const idx = arr.indexOf(id);
     if (idx > -1) {
-      completions[todayStr].splice(idx, 1);
+      arr.splice(idx, 1);
       el.classList.remove('checked');
     } else {
-      completions[todayStr].push(id);
+      arr.push(id);
       el.classList.add('checked');
     }
 
-    updateProgress(completions[todayStr].length, habits.length);
+    // Re-count progress
+    const visibleHabits = habits.filter(h => {
+      return h.createdAt <= selectedDateStr && (!h.deletedAt || h.deletedAt >= selectedDateStr);
+    });
+    const done = arr.filter(id => visibleHabits.some(h => h.id === id)).length;
+    updateProgress(done, visibleHabits.length);
   }
 
   const saveTodayBtn = document.getElementById('save-today-btn');
   if (saveTodayBtn) {
     saveTodayBtn.addEventListener('click', () => {
-      GitHub.saveFile(getMonthPath(currentDate), completions);
+      const path = getMonthPath(selectedDateStr);
+      const data = monthCache[path] || {};
+      GitHub.saveFile(path, data);
     });
   }
 
@@ -264,6 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (total === 0) {
       progressBar.style.width = '0%';
       progressLabel.textContent = '0 / 0';
+      progressRing.innerHTML = '';
       return;
     }
     const pct = Math.round((done / total) * 100);
@@ -277,69 +421,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- Habit Details Modal ---
-  const hdModal = document.getElementById('habit-details-modal');
+  // ── Habit Details Modal ───────────────────────────────────────────────────
+  const hdModal   = document.getElementById('habit-details-modal');
   const hdCloseBtn = document.getElementById('hd-close-btn');
 
   hdCloseBtn.addEventListener('click', () => hdModal.classList.add('hidden'));
 
   async function openHabitDetails(habit) {
     document.getElementById('hd-name').textContent = habit.name;
-    document.getElementById('hd-start').textContent = new Date(habit.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('hd-start').textContent = new Date(habit.createdAt + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     document.getElementById('hd-consistency').textContent = '...';
     document.getElementById('hd-history-list').innerHTML = '<p class="loading-text" style="padding-top:1rem">Loading history...</p>';
     hdModal.classList.remove('hidden');
 
-    const start = new Date(habit.createdAt);
+    const start  = new Date(habit.createdAt + 'T00:00:00');
     const endStr = habit.deletedAt ? habit.deletedAt : todayStr;
-    const end = new Date(endStr);
+    const end    = new Date(endStr + 'T00:00:00');
 
     const dates = [];
-    let current = new Date(start);
-    while (current <= end) {
-      dates.push(current.toISOString().split('T')[0]);
-      current.setDate(current.getDate() + 1);
+    let cur = new Date(start);
+    while (cur <= end) {
+      dates.push(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() + 1);
     }
 
-    // We only need month files for the dates array
-    const monthsNeeded = [...new Set(dates.map(d => {
-      const parts = d.split('-');
-      return `data/habits/${parts[0]}/${parts[1]}.json`;
-    }))];
+    const monthsNeeded = [...new Set(dates.map(d => getMonthPath(d)))];
 
-    let totalDays = dates.length;
-    if (totalDays === 0) totalDays = 1;
+    let totalDays = dates.length || 1;
     let completedDays = 0;
 
     try {
       const monthData = {};
       await Promise.all(monthsNeeded.map(async path => {
-        let res = await GitHub.getFile(path);
-        monthData[path] = res.content || {};
+        const res = await GitHub.getFile(path);
+        // Merge with in-memory cache so unsaved toggles are reflected
+        monthData[path] = { ...(res.content || {}), ...(monthCache[path] || {}) };
       }));
 
       const listEl = document.getElementById('hd-history-list');
       listEl.innerHTML = '';
 
       dates.forEach(d => {
-        const parts = d.split('-');
-        const path = `data/habits/${parts[0]}/${parts[1]}.json`;
-        const monthLog = monthData[path];
-
-        let isDone = false;
-        // Prioritize local state for today
-        if (d === todayStr && completions[todayStr]) {
-          isDone = completions[todayStr].includes(habit.id);
-        } else {
-          isDone = (monthLog[d] || []).includes(habit.id);
-        }
-
+        const path = getMonthPath(d);
+        const monthLog = monthData[path] || {};
+        const isDone = (monthLog[d] || []).includes(habit.id);
         if (isDone) completedDays++;
 
         const row = document.createElement('div');
         row.className = 'habit-history-row';
+
         const dateSpan = document.createElement('span');
-        dateSpan.textContent = new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        dateSpan.textContent = new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
         const statusSpan = document.createElement('span');
         statusSpan.className = isDone ? 'habit-status-yes' : 'habit-status-no';
         statusSpan.textContent = isDone ? '✔ Completed' : '✖ Missed';
@@ -349,31 +482,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         listEl.appendChild(row);
       });
 
-      const consistency = Math.round((completedDays / totalDays) * 100);
-      document.getElementById('hd-consistency').textContent = consistency;
+      document.getElementById('hd-consistency').textContent = Math.round((completedDays / totalDays) * 100);
 
     } catch (e) {
       document.getElementById('hd-history-list').innerHTML = '<p class="loading-text">Error loading history.</p>';
     }
   }
 
-  // --- Dashboard Logic ---
-
+  // ── Dashboard Logic ───────────────────────────────────────────────────────
   function renderDashboard() {
     const activeHabits = habits.filter(h => h.isActive);
 
-    // Overall Consistency (This Month)
-    // Formula: sum of completions for active habits / sum of possible days for active habits
     let d = new Date();
     d.setDate(1);
     const startOfMonth = d.toISOString().split('T')[0];
 
     const datesThisMonth = [];
-    let cur = new Date(startOfMonth);
-    const end = new Date(todayStr); // Only up to today
-    while (cur <= end) {
-      datesThisMonth.push(cur.toISOString().split('T')[0]);
-      cur.setDate(cur.getDate() + 1);
+    let cur2 = new Date(startOfMonth + 'T00:00:00');
+    const end2 = new Date(todayStr + 'T00:00:00');
+    while (cur2 <= end2) {
+      datesThisMonth.push(cur2.toISOString().split('T')[0]);
+      cur2.setDate(cur2.getDate() + 1);
     }
 
     let totalPossible = 0;
@@ -388,10 +517,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       datesThisMonth.forEach(date => {
         if (date >= h.createdAt && (!h.deletedAt || date <= h.deletedAt)) {
           habitPossible++;
-          // Prioritize today's in-memory unsaved toggles, fallback to API cache
-          const isDoneToday = date === todayStr && completions[todayStr] && completions[todayStr].includes(h.id);
-          const isDonePast = completions[date] && completions[date].includes(h.id);
-          if (isDoneToday || isDonePast) {
+          const comps = getCompletionsForDate(date);
+          if (comps.includes(h.id)) {
             habitDone++;
             totalDone++;
           }
@@ -406,53 +533,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         pct: habitPossible > 0 ? Math.round((habitDone / habitPossible) * 100) : 0
       });
 
-      // Calculate streak
+      // Streak calculation (relies on monthCache; only current month available)
       let streak = 0;
-      let checkDate = new Date(todayStr);
-      let missingToday = false;
-
-      // If today is not done, move to yesterday
-      if (!completions[todayStr] || !completions[todayStr].includes(h.id)) {
-        missingToday = true;
+      let checkDate = new Date(todayStr + 'T00:00:00');
+      if (!getCompletionsForDate(todayStr).includes(h.id)) {
         checkDate.setDate(checkDate.getDate() - 1);
       }
-
       while (true) {
         const dStr = checkDate.toISOString().split('T')[0];
         if (dStr < h.createdAt) break;
-        if (h.deletedAt && dStr > h.deletedAt) {
-          checkDate.setDate(checkDate.getDate() - 1);
-          continue;
-        }
-
-        // is done?
-        let checkDone = false;
-        if (dStr === todayStr) {
-          checkDone = completions[todayStr] && completions[todayStr].includes(h.id);
-        } else {
-          // We might not have past month data loaded if it crosses a month boundary.
-          // For streaks, if it crosses a month, it will require an async check.
-          // However, if we only look at completions (which only has current month), streak stops at month edge.
-          // Let's rely strictly on `completions` which holds the current month loaded data.
-          checkDone = completions[dStr] && completions[dStr].includes(h.id);
-        }
-
-        if (checkDone) {
+        if (h.deletedAt && dStr > h.deletedAt) { checkDate.setDate(checkDate.getDate() - 1); continue; }
+        if (getCompletionsForDate(dStr).includes(h.id)) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
         } else {
-          break; // Stop climbing back
+          break;
         }
       }
-
-      // Formatting: if missing today but streak > 0 from yesterday, that's fine.
-      streaksData.push({
-        name: h.name,
-        streak: streak
-      });
+      streaksData.push({ name: h.name, streak });
     });
 
-    // Render Overview
     const overallPct = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
     document.getElementById('dash-overall-bar').style.width = overallPct + '%';
     document.getElementById('dash-overall-val').textContent = overallPct + '%';
@@ -484,11 +584,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     });
 
-    // Render Explorer Layer
+    // Explorer
     const explorerList = document.getElementById('explorer-list');
     explorerList.innerHTML = '';
-
-    // Show all habits. If deleted, add (deleted)
     habits.forEach(h => {
       const pill = document.createElement('div');
       pill.className = 'explorer-pill';
@@ -501,7 +599,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       explorerList.appendChild(pill);
     });
 
-    // Select first active if exists
     if (activeHabits.length > 0) {
       explorerList.firstChild.click();
     } else {
@@ -514,46 +611,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     expPanel.style.display = 'block';
 
     document.getElementById('exp-name').textContent = habit.name;
-    document.getElementById('exp-start').textContent = new Date(habit.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('exp-start').textContent = new Date(habit.createdAt + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     document.getElementById('exp-consistency').textContent = '...';
     document.getElementById('exp-history').innerHTML = '<p class="loading-text" style="padding-top:1rem">Loading history...</p>';
 
-    const start = new Date(habit.createdAt);
+    const start  = new Date(habit.createdAt + 'T00:00:00');
     const endStr = habit.deletedAt ? habit.deletedAt : todayStr;
-    const end = new Date(endStr);
+    const end    = new Date(endStr + 'T00:00:00');
 
     const dates = [];
-    let current = new Date(end);
-    while (current >= start) {
-      dates.push(current.toISOString().split('T')[0]);
-      current.setDate(current.getDate() - 1);
+    let cur = new Date(end);
+    while (cur >= start) {
+      dates.push(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() - 1);
     }
-    dates.reverse(); // oldest first to keep it chronological
+    dates.reverse();
 
-    const monthsNeeded = [...new Set(dates.map(d => {
-      const parts = d.split('-');
-      return `data/habits/${parts[0]}/${parts[1]}.json`;
-    }))];
-
-    let totalDays = dates.length;
-    if (totalDays === 0) totalDays = 1;
+    const monthsNeeded = [...new Set(dates.map(d => getMonthPath(d)))];
+    let totalDays = dates.length || 1;
     let completedDays = 0;
 
     try {
       const monthData = {};
       await Promise.all(monthsNeeded.map(async path => {
-        let res = await GitHub.getFile(path);
-        monthData[path] = res.content || {};
+        const res = await GitHub.getFile(path);
+        monthData[path] = { ...(res.content || {}), ...(monthCache[path] || {}) };
       }));
 
       const listEl = document.getElementById('exp-history');
       listEl.innerHTML = '';
-
-      let currentMonthStr = "";
+      let currentMonthStr = '';
 
       dates.forEach(d => {
-        const parts = d.split('-');
-        const monthGroupStr = new Date(d).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const monthGroupStr = new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         if (monthGroupStr !== currentMonthStr) {
           currentMonthStr = monthGroupStr;
           const groupTitle = document.createElement('div');
@@ -563,22 +653,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           listEl.appendChild(groupTitle);
         }
 
-        const path = `data/habits/${parts[0]}/${parts[1]}.json`;
-        const monthLog = monthData[path];
-
-        let isDone = false;
-        if (d === todayStr && completions[todayStr]) {
-          isDone = completions[todayStr].includes(habit.id);
-        } else {
-          isDone = (monthLog[d] || []).includes(habit.id);
-        }
-
+        const path = getMonthPath(d);
+        const monthLog = monthData[path] || {};
+        const isDone = (monthLog[d] || []).includes(habit.id);
         if (isDone) completedDays++;
 
         const row = document.createElement('div');
         row.className = 'habit-history-row';
         const dateSpan = document.createElement('span');
-        dateSpan.textContent = new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        dateSpan.textContent = new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const statusSpan = document.createElement('span');
         statusSpan.className = isDone ? 'habit-status-yes' : 'habit-status-no';
         statusSpan.textContent = isDone ? '✔' : '✖';
@@ -588,14 +671,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         listEl.appendChild(row);
       });
 
-      const consistency = Math.round((completedDays / totalDays) * 100);
-      document.getElementById('exp-consistency').textContent = consistency;
+      document.getElementById('exp-consistency').textContent = Math.round((completedDays / totalDays) * 100);
 
     } catch (e) {
       document.getElementById('exp-history').innerHTML = '<p class="loading-text">Error loading history.</p>';
     }
   }
 
-  // Start app
+  // ── Start ─────────────────────────────────────────────────────────────────
   init();
 });
